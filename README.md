@@ -33,4 +33,7 @@ This project is a simple front-end starter template for building admin dashboard
 2. cd rpanel-client
 3. npm install
 4. npm run dev
+
+## Live Demo
+https://rpanel.vercel.app
    
