@@ -68,7 +68,7 @@ export async function accountAvatarCreate(userData: any) {
 		const jwt = getJwt();
 		
 		const response = await fetch(`${API_BASE_URL}/admin/account/avatar`, {
-			method: "PUT",
+			method: "POST",
 			headers: {
 				"Authorization": `Bearer ${jwt}`,
 				"Content-Type": "application/json",
