@@ -6,7 +6,7 @@ import {
 
 import { signIn, signOut, sendPWResetToken, passwordReset } from "@/lib/api/AuthApi"
 import { createUser, deleteUsers, editUser, getCurrentUser, getUserById, getUsers, getUsersCount} from "@/lib/api/UserApi";
-import { accountPWChange, accountUpdate } from "@/lib/api/Account";
+import { accountPWChange, accountUpdate, accountAvatarCreate, accountAvatarDelete, accountAvatars } from "@/lib/api/Account";
 import { getAdminLogs, getAdminLogsCount } from "@/lib//api/AdminLogs";
 import { uploadFile } from "@/lib/api/FileServiceApi";
 import { getLatestVersion, getReleases } from "@/lib/api/GithubApi";
@@ -147,6 +147,38 @@ export const useAccountPWChange = () => {
 					queryKey: [QUERY_KEYS.GET_CURRENT_USER], /* Refetch updated user data */
 				});
 			}
+	});
+};
+
+export const useAccountAvatarCreate = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (data: any) =>
+			accountAvatarCreate(data),
+			onSuccess: () => {
+				queryClient.invalidateQueries({
+					queryKey: [QUERY_KEYS.ACCOUNT_AVATARS], 
+				});
+			}
+	});
+};
+
+export const useAccountAvatarDelete = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (imageUrl: string) => accountAvatarDelete(imageUrl),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: [QUERY_KEYS.ACCOUNT_AVATARS],
+			});
+		},
+	});
+};
+
+export const useAccountAvatars = () => {
+	return useQuery({
+		queryKey: [QUERY_KEYS.ACCOUNT_AVATARS],
+		queryFn: () => accountAvatars()
 	});
 };
 
