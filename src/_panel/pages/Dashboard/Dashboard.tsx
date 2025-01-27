@@ -115,20 +115,25 @@ const Dashboard = () => {
             </div>
            
               <>
-                {!isFetchingUsersCount && usersCount &&  (
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-600 dark:text-gray-400">Total Users:</span>
-                    <span className="font-medium text-gray-900 dark:text-gray-100">{usersCount?.count}</span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600 dark:text-gray-400">Total Usage:</span>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{`${totalUsage} MB`}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Total Revenue:</span>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{numberFormat(totalRevenue)}</span>
-                </div>
+                {!isFetchingUsersCount ? (
+                  <>
+                      {usersCount && (
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-gray-600 dark:text-gray-400">Total Users:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{usersCount?.count}</span>
+                        </div>
+                      )}
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-gray-600 dark:text-gray-400">Total Usage:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{`${totalUsage} MB`}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-400">Total Revenue:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{numberFormat(totalRevenue)}</span>
+                    </div>
+                  </>
+                ):<Loader />}
+                
               </>
             
           </Card>
