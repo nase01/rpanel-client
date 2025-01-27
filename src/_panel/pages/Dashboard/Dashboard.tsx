@@ -6,13 +6,19 @@ import { Card } from "@/components/ui/card";
 import { useGetUsersCount } from "@/lib/react-query/queries";
 import Loader from "@/components/shared/Loader";
 import { numberFormat } from "@/lib/utils";
+import { getJwtPayload } from '@/lib/utils';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
 
 const Dashboard = () => {
-  const { data: usersCount, isLoading: isfetchingUsersCount } = useGetUsersCount();
-  console.log(usersCount)
-  // Data for the donut chart
+  const jwtPayload = getJwtPayload();
+
+  const isSuper = jwtPayload?.role === 'super';
+  console.log(isSuper)
+  const { data: usersCount, isLoading: isFetchingUsersCount } = useGetUsersCount({
+    enabled: isSuper, 
+  });
+
   const doughnutData = {
     labels: ["Memory", "CPU", "Storage"],
     datasets: [
@@ -107,12 +113,14 @@ const Dashboard = () => {
             <div className="text-lg font-semibold mb-4 border-b pb-2 text-primary dark:text-white">
               Summary
             </div>
-            {isfetchingUsersCount  ? <Loader  /> : (
+           
               <>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600 dark:text-gray-400">Total Users:</span>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{usersCount?.count}</span>
-                </div>
+                {!isFetchingUsersCount && usersCount &&  (
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-600 dark:text-gray-400">Total Users:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{usersCount?.count}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600 dark:text-gray-400">Total Usage:</span>
                   <span className="font-medium text-gray-900 dark:text-gray-100">{`${totalUsage} MB`}</span>
@@ -122,7 +130,7 @@ const Dashboard = () => {
                   <span className="font-medium text-gray-900 dark:text-gray-100">{numberFormat(totalRevenue)}</span>
                 </div>
               </>
-            )}
+            
           </Card>
           <Card className="rounded-md p-5 bg-accent shadow-sm w-full sm:col-span-2">
             <div className="text-lg font-semibold mb-4 border-b pb-2 text-primary dark:text-white">
