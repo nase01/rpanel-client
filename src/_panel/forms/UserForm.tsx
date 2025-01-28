@@ -24,6 +24,8 @@ import { presetAvatars, toastConfig } from "@/constants";
 import { Icons } from "@/components/ui/icons";
 import { useModalIsOpen, useModalIsLoading } from "@/components/ToggleProvider";
 import { useEffect, useState } from "react";
+import { PlusIcon } from "lucide-react";
+import Tooltip from "@/components/shared/Tooltip";
 
 const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "user-create" }) => {
   const navigate = useNavigate();
@@ -233,6 +235,13 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
                   <img src={avatar.path} alt={avatar.fileName} className="w-12 h-12 rounded-full" />
                 </div>
               ))}
+              {userAction === "account-edit" && (
+                <Tooltip message={"Add Custom Avatar"} position="left">
+                  <button type="button" className="cursor-pointer shrink-0 p-2 border-2 rounded-md transition-transform duration-300 ease-in-out text-gray-300">
+                    <PlusIcon />
+                  </button>
+                </Tooltip>
+              )}
             </div>
           </div>
         </div>
