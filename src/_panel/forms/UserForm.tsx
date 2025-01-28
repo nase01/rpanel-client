@@ -22,16 +22,21 @@ import { UserFormProps } from "@/types";
 import toast from "react-hot-toast";
 import { presetAvatars, toastConfig } from "@/constants";
 import { Icons } from "@/components/ui/icons";
-import { useModalIsOpen, useModalIsLoading } from "@/components/ToggleProvider";
+import { useModalIsOpen, useModalIsLoading, useModalFileUploadIsOpen } from "@/components/ToggleProvider";
 import { useEffect, useState } from "react";
 import { PlusIcon } from "lucide-react";
 import Tooltip from "@/components/shared/Tooltip";
+
+import ModalFileUpload from "@/components/ModalFileUpload";
 
 const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "user-create" }) => {
   const navigate = useNavigate();
   const { mutateAsync: createUser, isPending: isCreatingUser } = useCreateUser();
   const { mutateAsync: editUser, isPending: isUpdatingUser } = useEditUser();
   const { mutateAsync: accountUpdate, isPending: isUpdatingAccount } = useAccountUpdate();
+  
+  const { modalFileUploadIsOpen, setModalFileUploadIsOpen } = useModalFileUploadIsOpen();
+  const [fileUploaded, setFileUploaded] = useState("");
   const { setModalIsOpen } = useModalIsOpen();
   const { setModalIsLoading } = useModalIsLoading();
   const [selectedAvatar, setSelectedAvatar] = useState<string>(
@@ -102,6 +107,12 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
     setModalIsLoading(isProcessing);
   }, [isProcessing]);
   
+  useEffect(() => {
+    if (fileUploaded) {
+      console.log(fileUploaded)
+      // Todo: Call useAccountAvatarCreate() API
+    }
+  }, [fileUploaded]);
 
   return (
     <Form {...form}>
@@ -237,7 +248,7 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
               ))}
               {userAction === "account-edit" && (
                 <Tooltip message={"Add Custom Avatar"} position="left">
-                  <button type="button" className="cursor-pointer shrink-0 p-2 border-2 rounded-md transition-transform duration-300 ease-in-out text-gray-300">
+                  <button type="button" onClick={() => setModalFileUploadIsOpen(true)} className="cursor-pointer shrink-0 p-2 border-2 rounded-md transition-transform duration-300 ease-in-out text-gray-300">
                     <PlusIcon />
                   </button>
                 </Tooltip>
@@ -282,6 +293,10 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
             { !userData && !userId ? "Create" : "Update" }
           </Button>
         </div>
+
+        {modalFileUploadIsOpen && (
+          <ModalFileUpload setFileUploaded={setFileUploaded} />
+        )}
 
       </form>
     </Form>
