@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 import { UserValidation } from "@/lib/validation/UserValidations";
-import { useAccountUpdate, useCreateUser, useEditUser } from "@/lib/react-query/queries";
+import { useAccountAvatarCreate, useAccountUpdate, useCreateUser, useEditUser } from "@/lib/react-query/queries";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -28,12 +28,14 @@ import { PlusIcon } from "lucide-react";
 import Tooltip from "@/components/shared/Tooltip";
 
 import ModalFileUpload from "@/components/ModalFileUpload";
+import Loader2 from "@/components/shared/Loader2";
 
 const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "user-create" }) => {
   const navigate = useNavigate();
   const { mutateAsync: createUser, isPending: isCreatingUser } = useCreateUser();
   const { mutateAsync: editUser, isPending: isUpdatingUser } = useEditUser();
   const { mutateAsync: accountUpdate, isPending: isUpdatingAccount } = useAccountUpdate();
+  const { mutateAsync: createAvatar, isPending: isCreatingAvatar } = useAccountAvatarCreate();
   
   const { modalFileUploadIsOpen, setModalFileUploadIsOpen } = useModalFileUploadIsOpen();
   const [fileUploaded, setFileUploaded] = useState("");
@@ -43,7 +45,7 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
     userData?.imageUrl || "/assets/avatars/default-avatar.png"
   );
 
-  const isProcessing = isCreatingUser || isUpdatingUser || isUpdatingAccount;
+  const isProcessing = isCreatingUser || isUpdatingUser || isUpdatingAccount || isCreatingAvatar;
   
   const form = useForm<z.infer<typeof UserValidation>>({
     resolver: zodResolver(UserValidation),
@@ -108,11 +110,34 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
   }, [isProcessing]);
   
   useEffect(() => {
-    if (fileUploaded) {
-      console.log(fileUploaded)
-      // Todo: Call useAccountAvatarCreate() API
-    }
-  }, [fileUploaded]);
+    const createAvatarAsync = async () => {
+      if (fileUploaded) {
+        try {
+
+          const data = {
+            "accountType": "admin",
+            "imageUrl": fileUploaded
+          }
+          
+          const response = await createAvatar(data);
+  
+          if (response?.errors) {
+            toast.error(response.errors[0].detail, toastConfig);
+            return;
+          }
+          
+          //Todo: Create new state for combined presetAvatar and accountAvatars
+
+        } catch (error) {
+          toast.error("An error occurred while creating the avatar", toastConfig);
+        }
+      }
+    };
+  
+    createAvatarAsync();
+  }, [fileUploaded]); 
+
+  if (isCreatingAvatar) return <Loader2 />;
 
   return (
     <Form {...form}>
