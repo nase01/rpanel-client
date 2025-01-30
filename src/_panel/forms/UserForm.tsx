@@ -2,13 +2,23 @@ import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
 import { UserValidation } from "@/lib/validation/UserValidations";
-import { useAccountAvatarCreate, useAccountUpdate, useCreateUser, useEditUser } from "@/lib/react-query/queries";
+import { 
+  useAccountAvatarCreate, 
+  useAccountAvatars, 
+  useAccountUpdate, 
+  useCreateUser, 
+  useEditUser 
+} from "@/lib/react-query/queries";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -36,6 +46,8 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
   const { mutateAsync: editUser, isPending: isUpdatingUser } = useEditUser();
   const { mutateAsync: accountUpdate, isPending: isUpdatingAccount } = useAccountUpdate();
   const { mutateAsync: createAvatar, isPending: isCreatingAvatar } = useAccountAvatarCreate();
+  const { data: accountAvatars, isLoading: isFetchingAccountAvatars} = useAccountAvatars();
+  const [avatars, setAvatars] = useState(presetAvatars);
   
   const { modalFileUploadIsOpen, setModalFileUploadIsOpen } = useModalFileUploadIsOpen();
   const [fileUploaded, setFileUploaded] = useState("");
@@ -126,7 +138,13 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
             return;
           }
           
-          //Todo: Create new state for combined presetAvatar and accountAvatars
+          // If successful, append the new avatar to the state
+          const newAvatar = {
+            fileName: fileUploaded.split("/").pop() || "custom-avatar.png",
+            path: fileUploaded,
+          };
+
+          setAvatars((prevAvatars) => [...prevAvatars, newAvatar]);
 
         } catch (error) {
           toast.error("An error occurred while creating the avatar", toastConfig);
@@ -137,7 +155,19 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
     createAvatarAsync();
   }, [fileUploaded]); 
 
-  if (isCreatingAvatar) return <Loader2 />;
+  useEffect(() => {
+    if (accountAvatars && userAction === "account-edit") {
+      // Append accountAvatars to presetAvatars
+      const customAvatars = accountAvatars.map((avatar: { imageUrl: string; }) => ({
+        fileName: avatar.imageUrl.split("/").pop() || "custom-avatar.png",
+        path: avatar.imageUrl,
+      }));
+
+      setAvatars([...presetAvatars, ...customAvatars]);
+    }
+  }, [accountAvatars]);
+
+  if (isCreatingAvatar || isFetchingAccountAvatars) return <Loader2 />;
 
   return (
     <Form {...form}>
@@ -260,7 +290,7 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
           <FormLabel className="shad-form_label">Avatar:</FormLabel>
           <div className="overflow-x-auto w-full">
             <div className="flex items-center gap-2 py-2">
-              {presetAvatars.map((avatar) => (
+              {avatars.map((avatar) => (
                 <div
                   key={avatar.fileName}
                   className={`cursor-pointer shrink-0 p-2 border-2 rounded-md transition-transform duration-300 ease-in-out ${
