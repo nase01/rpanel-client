@@ -34,7 +34,7 @@ import { presetAvatars, toastConfig } from "@/constants";
 import { Icons } from "@/components/ui/icons";
 import { useModalIsOpen, useModalIsLoading, useModalFileUploadIsOpen } from "@/components/ToggleProvider";
 import { useEffect, useState } from "react";
-import { PlusIcon } from "lucide-react";
+import { Minus, PlusIcon } from "lucide-react";
 import Tooltip from "@/components/shared/Tooltip";
 
 import ModalFileUpload from "@/components/ModalFileUpload";
@@ -117,6 +117,10 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
     setSelectedAvatar(path); // Set selected avatar path or null for 'None'
   };
 
+  const handleRemoveCustomAvatar = (imageUrl: string) => {
+    console.log(imageUrl)
+  };
+
   useEffect(() => {
     setModalIsLoading(isProcessing);
   }, [isProcessing]);
@@ -142,6 +146,7 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
           const newAvatar = {
             fileName: fileUploaded.split("/").pop() || "custom-avatar.png",
             path: fileUploaded,
+            preset: false
           };
 
           setAvatars((prevAvatars) => [...prevAvatars, newAvatar]);
@@ -161,6 +166,7 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
       const customAvatars = accountAvatars.map((avatar: { imageUrl: string; }) => ({
         fileName: avatar.imageUrl.split("/").pop() || "custom-avatar.png",
         path: avatar.imageUrl,
+        preset: false
       }));
 
       setAvatars([...presetAvatars, ...customAvatars]);
@@ -289,26 +295,43 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
         <div>
           <FormLabel className="shad-form_label">Avatar:</FormLabel>
           <div className="overflow-x-auto w-full">
-            <div className="flex items-center gap-2 py-2">
-              {avatars.map((avatar) => (
-                <div
-                  key={avatar.fileName}
-                  className={`cursor-pointer shrink-0 p-2 border-2 rounded-md transition-transform duration-300 ease-in-out ${
-                    selectedAvatar === avatar.path ? "border-main -translate-y-1 shadow-sm" : "border-gray-300 dark:border-slate-800"
-                  }`}
-                  onClick={() => handleAvatarClick(avatar.path)}
-                >
-                  <img src={avatar.path} alt={avatar.fileName} className="w-12 h-12 rounded-full" />
-                </div>
-              ))}
-              {userAction === "account-edit" && (
-                <Tooltip message={"Add Custom Avatar"} position="left">
-                  <button type="button" onClick={() => setModalFileUploadIsOpen(true)} className="cursor-pointer shrink-0 p-2 border-2 rounded-md transition-transform duration-300 ease-in-out text-gray-300">
-                    <PlusIcon />
+          <div className="flex items-center gap-2 py-2">
+            {avatars.map((avatar) => (
+              <div
+                key={avatar.fileName}
+                className={`group relative cursor-pointer shrink-0 p-2 border-2 rounded-md transition-transform duration-300 ease-in-out ${
+                  selectedAvatar === avatar.path ? "border-main -translate-y-1 shadow-sm" : "border-gray-300 dark:border-slate-800"
+                }`}
+                onClick={() => handleAvatarClick(avatar.path)}
+              >
+                {!avatar.preset && (
+                  <button
+                    type="button"
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs shadow-md hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering avatar selection
+                      handleRemoveCustomAvatar(avatar.path);
+                    }}
+                  >
+                    <Minus className="w-3 h-3" />
                   </button>
-                </Tooltip>
-              )}
-            </div>
+                )}
+                  
+                <img src={avatar.path} alt={avatar.fileName} className="w-12 h-12 rounded-full" />
+              </div>
+            ))}
+            {userAction === "account-edit" && (
+              <Tooltip message={"Add Custom Avatar"} position="left">
+                <button
+                  type="button"
+                  onClick={() => setModalFileUploadIsOpen(true)}
+                  className="cursor-pointer shrink-0 p-2 border-2 rounded-md transition-transform duration-300 ease-in-out text-gray-300"
+                >
+                  <PlusIcon />
+                </button>
+              </Tooltip>
+            )}
+          </div>
           </div>
         </div>
 
