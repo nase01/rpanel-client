@@ -8,7 +8,7 @@ import { signIn, signOut, sendPWResetToken, passwordReset } from "@/lib/api/Auth
 import { createUser, deleteUsers, editUser, getCurrentUser, getUserById, getUsers, getUsersCount} from "@/lib/api/UserApi";
 import { accountPWChange, accountUpdate, accountAvatarCreate, accountAvatarDelete, accountAvatars } from "@/lib/api/Account";
 import { getAdminLogs, getAdminLogsCount } from "@/lib//api/AdminLogs";
-import { uploadFile } from "@/lib/api/FileServiceApi";
+import { deleteFile, uploadFile } from "@/lib/api/FileServiceApi";
 import { getLatestVersion, getReleases } from "@/lib/api/GithubApi";
 import { QUERY_KEYS } from "@/lib/react-query/queryKeys";
 
@@ -207,6 +207,12 @@ export const useGetAdminLogs = (pageSize: number, currentPage: number, search?: 
 export const useUploadFile = () => {
 	return useMutation({
 		mutationFn: (file: File) => uploadFile(file),
+	});
+};
+
+export const useDeleteFile = () => {
+	return useMutation({
+	  mutationFn: (fileNames: string[]) => deleteFile(fileNames),
 	});
 };
 
