@@ -14,9 +14,11 @@ import { Button } from "@/components/ui/button";
 import { UserValidation } from "@/lib/validation/UserValidations";
 import { 
   useAccountAvatarCreate, 
+  useAccountAvatarDelete, 
   useAccountAvatars, 
   useAccountUpdate, 
   useCreateUser, 
+  useDeleteFile, 
   useEditUser 
 } from "@/lib/react-query/queries";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,6 +48,8 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
   const { mutateAsync: editUser, isPending: isUpdatingUser } = useEditUser();
   const { mutateAsync: accountUpdate, isPending: isUpdatingAccount } = useAccountUpdate();
   const { mutateAsync: createAvatar, isPending: isCreatingAvatar } = useAccountAvatarCreate();
+  const { mutateAsync: deleteAvatar, isPending: isDeletingAvatar } = useAccountAvatarDelete();
+  const { mutateAsync: deleteFile, isPending: isDeletingFile } = useDeleteFile();
   const { data: accountAvatars, isLoading: isFetchingAccountAvatars} = useAccountAvatars();
   const [avatars, setAvatars] = useState(presetAvatars);
   
@@ -117,8 +121,32 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
     setSelectedAvatar(path); // Set selected avatar path or null for 'None'
   };
 
-  const handleRemoveCustomAvatar = (imageUrl: string) => {
-    console.log(imageUrl)
+  const handleRemoveCustomAvatar = async (avatarFilePath: string, avatarFileName: string) => {  
+    try {
+      const [deletedAvatar, deletedFile] = await Promise.all([
+        deleteAvatar(avatarFilePath),
+        deleteFile([avatarFileName])
+      ]);
+  
+      if (deletedAvatar?.errors) {
+        toast.error(deletedAvatar.errors[0].detail, toastConfig);
+        return;
+      }
+  
+      if (deletedFile?.errors) {
+        toast.error(deletedFile.errors[0].detail, toastConfig);
+        return;
+      }
+      
+      // Remove the deleted avatar from the avatars array and update the state
+      setAvatars(prevAvatars => 
+        prevAvatars.filter(avatar => avatar.fileName !== avatarFileName)
+      );
+
+      toast.success("Custom avatar removed", toastConfig);
+    } catch (error) {
+      toast.error("An error occurred while removing the avatar", toastConfig);
+    }
   };
 
   useEffect(() => {
@@ -150,6 +178,7 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
           };
 
           setAvatars((prevAvatars) => [...prevAvatars, newAvatar]);
+          console.log(avatars)
 
         } catch (error) {
           toast.error("An error occurred while creating the avatar", toastConfig);
@@ -173,7 +202,7 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
     }
   }, [accountAvatars]);
 
-  if (isCreatingAvatar || isFetchingAccountAvatars) return <Loader2 />;
+  if (isCreatingAvatar || isFetchingAccountAvatars || isDeletingAvatar || isDeletingFile) return <Loader2 />;
 
   return (
     <Form {...form}>
@@ -310,7 +339,7 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
                     className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs shadow-md hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent triggering avatar selection
-                      handleRemoveCustomAvatar(avatar.path);
+                      handleRemoveCustomAvatar(avatar.path, avatar.fileName);
                     }}
                   >
                     <Minus className="w-3 h-3" />

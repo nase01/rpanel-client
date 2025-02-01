@@ -34,7 +34,7 @@ export async function uploadFile(file: File) {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${FILEUPLOAD_API_KEY}`, 
-    },
+      },
       body: formData,
     });
     
