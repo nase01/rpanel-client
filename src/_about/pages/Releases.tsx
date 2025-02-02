@@ -7,8 +7,7 @@ import { Release } from "@/types";
 
 const releases = () => {
 	const { data: releases, isLoading: isFetchingReleases } = useGetReleases(GITHUB_CLIENT_REPO);
-	console.log(releases)
-
+	
 	if (isFetchingReleases) return <Loader2 />;
   return (
     <div className="grid lg:grid-cols-6 gap-5">
