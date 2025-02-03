@@ -60,7 +60,7 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
   const [selectedAvatar, setSelectedAvatar] = useState<string>(
     userData?.imageUrl || "/assets/avatars/default-avatar.png"
   );
-
+  
   const isProcessing = isCreatingUser || isUpdatingUser || isUpdatingAccount || isCreatingAvatar;
   
   const form = useForm<z.infer<typeof UserValidation>>({
@@ -142,6 +142,9 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
       setAvatars(prevAvatars => 
         prevAvatars.filter(avatar => avatar.fileName !== avatarFileName)
       );
+
+      // Move border to selected avatar again
+      setSelectedAvatar(userData?.imageUrl || "/assets/avatars/default-avatar.png")
 
       toast.success("Custom avatar removed", toastConfig);
     } catch (error) {
