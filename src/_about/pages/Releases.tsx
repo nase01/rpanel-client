@@ -26,7 +26,7 @@ const releases = () => {
                 {new Date(release.published_at).toLocaleDateString()}
               </h3>
               <h3 className="mt-2">Release Notes:</h3>
-              <ul className="ml-10 mt-2 list-disc" dangerouslySetInnerHTML={{ __html: formattedBody }} />
+              <ul className="ml-10 mt-2 list-disc text-gray-500" dangerouslySetInnerHTML={{ __html: formattedBody }} />
             </div>
           );
         })}
