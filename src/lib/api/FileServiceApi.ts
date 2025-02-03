@@ -34,7 +34,7 @@ export async function uploadFile(file: File) {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${FILEUPLOAD_API_KEY}`, 
-    },
+      },
       body: formData,
     });
     
@@ -55,4 +55,29 @@ export async function uploadFile(file: File) {
   } catch (error) {
     return { errors: [{ detail: (error as Error).message }] };
   }
+}
+
+export async function deleteFile(fileNames: string[]) {
+	try {
+		const response = await fetch(`${FILEUPLOAD_API_BASE_URL}/bucket/files`, {
+			method: "DELETE",
+			headers: {
+				"Authorization": `Bearer ${FILEUPLOAD_API_KEY}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ fileNames }),
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json();
+			throw new Error(errorData.errors[0].detail);
+		}
+
+		const data = await response.json();
+		
+		return data.data; 
+
+	} catch (error) {
+		return { errors: [{ detail: (error as Error).message }] };
+	}
 }

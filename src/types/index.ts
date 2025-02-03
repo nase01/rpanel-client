@@ -54,6 +54,7 @@ export type JwtPayload = {
 export type PresetAvatars = {
 	fileName: string;
 	path: string;
+	preset: boolean
 };
 
 export type Logs = {

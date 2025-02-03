@@ -2,13 +2,25 @@ import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
 import { UserValidation } from "@/lib/validation/UserValidations";
-import { useAccountUpdate, useCreateUser, useEditUser } from "@/lib/react-query/queries";
+import { 
+  useAccountAvatarCreate, 
+  useAccountAvatarDelete, 
+  useAccountAvatars, 
+  useAccountUpdate, 
+  useCreateUser, 
+  useDeleteFile, 
+  useEditUser 
+} from "@/lib/react-query/queries";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -22,21 +34,34 @@ import { UserFormProps } from "@/types";
 import toast from "react-hot-toast";
 import { presetAvatars, toastConfig } from "@/constants";
 import { Icons } from "@/components/ui/icons";
-import { useModalIsOpen, useModalIsLoading } from "@/components/ToggleProvider";
+import { useModalIsOpen, useModalIsLoading, useModalFileUploadIsOpen } from "@/components/ToggleProvider";
 import { useEffect, useState } from "react";
+import { Minus, PlusIcon } from "lucide-react";
+import Tooltip from "@/components/shared/Tooltip";
+
+import ModalFileUpload from "@/components/ModalFileUpload";
+import Loader2 from "@/components/shared/Loader2";
 
 const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "user-create" }) => {
   const navigate = useNavigate();
   const { mutateAsync: createUser, isPending: isCreatingUser } = useCreateUser();
   const { mutateAsync: editUser, isPending: isUpdatingUser } = useEditUser();
   const { mutateAsync: accountUpdate, isPending: isUpdatingAccount } = useAccountUpdate();
+  const { mutateAsync: createAvatar, isPending: isCreatingAvatar } = useAccountAvatarCreate();
+  const { mutateAsync: deleteAvatar, isPending: isDeletingAvatar } = useAccountAvatarDelete();
+  const { mutateAsync: deleteFile, isPending: isDeletingFile } = useDeleteFile();
+  const { data: accountAvatars, isLoading: isFetchingAccountAvatars} = useAccountAvatars();
+  const [avatars, setAvatars] = useState(presetAvatars);
+  
+  const { modalFileUploadIsOpen, setModalFileUploadIsOpen } = useModalFileUploadIsOpen();
+  const [fileUploaded, setFileUploaded] = useState("");
   const { setModalIsOpen } = useModalIsOpen();
   const { setModalIsLoading } = useModalIsLoading();
   const [selectedAvatar, setSelectedAvatar] = useState<string>(
     userData?.imageUrl || "/assets/avatars/default-avatar.png"
   );
-
-  const isProcessing = isCreatingUser || isUpdatingUser || isUpdatingAccount;
+  
+  const isProcessing = isCreatingUser || isUpdatingUser || isUpdatingAccount || isCreatingAvatar;
   
   const form = useForm<z.infer<typeof UserValidation>>({
     resolver: zodResolver(UserValidation),
@@ -96,10 +121,91 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
     setSelectedAvatar(path); // Set selected avatar path or null for 'None'
   };
 
+  const handleRemoveCustomAvatar = async (avatarFilePath: string, avatarFileName: string) => {  
+    try {
+      const [deletedAvatar, deletedFile] = await Promise.all([
+        deleteAvatar(avatarFilePath),
+        deleteFile([avatarFileName])
+      ]);
+  
+      if (deletedAvatar?.errors) {
+        toast.error(deletedAvatar.errors[0].detail, toastConfig);
+        return;
+      }
+  
+      if (deletedFile?.errors) {
+        toast.error(deletedFile.errors[0].detail, toastConfig);
+        return;
+      }
+      
+      // Remove the deleted avatar from the avatars array and update the state
+      setAvatars(prevAvatars => 
+        prevAvatars.filter(avatar => avatar.fileName !== avatarFileName)
+      );
+
+      // Move border to selected avatar again
+      setSelectedAvatar(userData?.imageUrl || "/assets/avatars/default-avatar.png")
+
+      toast.success("Custom avatar removed", toastConfig);
+    } catch (error) {
+      toast.error("An error occurred while removing the avatar", toastConfig);
+    }
+  };
+
   useEffect(() => {
     setModalIsLoading(isProcessing);
   }, [isProcessing]);
   
+  useEffect(() => {
+    const createAvatarAsync = async () => {
+      if (fileUploaded) {
+        try {
+
+          const data = {
+            "accountType": "admin",
+            "imageUrl": fileUploaded
+          }
+          
+          const response = await createAvatar(data);
+  
+          if (response?.errors) {
+            toast.error(response.errors[0].detail, toastConfig);
+            return;
+          }
+          
+          // If successful, append the new avatar to the state
+          const newAvatar = {
+            fileName: fileUploaded.split("/").pop() || "custom-avatar.png",
+            path: fileUploaded,
+            preset: false
+          };
+
+          setAvatars((prevAvatars) => [...prevAvatars, newAvatar]);
+          console.log(avatars)
+
+        } catch (error) {
+          toast.error("An error occurred while creating the avatar", toastConfig);
+        }
+      }
+    };
+  
+    createAvatarAsync();
+  }, [fileUploaded]); 
+
+  useEffect(() => {
+    if (accountAvatars && userAction === "account-edit") {
+      // Append accountAvatars to presetAvatars
+      const customAvatars = accountAvatars.map((avatar: { imageUrl: string; }) => ({
+        fileName: avatar.imageUrl.split("/").pop() || "custom-avatar.png",
+        path: avatar.imageUrl,
+        preset: false
+      }));
+
+      setAvatars([...presetAvatars, ...customAvatars]);
+    }
+  }, [accountAvatars]);
+
+  if (isCreatingAvatar || isFetchingAccountAvatars || isDeletingAvatar || isDeletingFile) return <Loader2 />;
 
   return (
     <Form {...form}>
@@ -221,19 +327,43 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
         <div>
           <FormLabel className="shad-form_label">Avatar:</FormLabel>
           <div className="overflow-x-auto w-full">
-            <div className="flex items-center gap-2 py-2">
-              {presetAvatars.map((avatar) => (
-                <div
-                  key={avatar.fileName}
-                  className={`cursor-pointer shrink-0 p-2 border-2 rounded-md transition-transform duration-300 ease-in-out ${
-                    selectedAvatar === avatar.path ? "border-main -translate-y-1 shadow-sm" : "border-gray-300 dark:border-slate-800"
-                  }`}
-                  onClick={() => handleAvatarClick(avatar.path)}
+          <div className="flex items-center gap-2 py-2">
+            {avatars.map((avatar) => (
+              <div
+                key={avatar.fileName}
+                className={`group relative cursor-pointer shrink-0 p-2 border-2 rounded-md transition-transform duration-300 ease-in-out ${
+                  selectedAvatar === avatar.path ? "border-main -translate-y-1 shadow-sm" : "border-gray-300 dark:border-slate-800"
+                }`}
+                onClick={() => handleAvatarClick(avatar.path)}
+              >
+                {!avatar.preset && (
+                  <button
+                    type="button"
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs shadow-md hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering avatar selection
+                      handleRemoveCustomAvatar(avatar.path, avatar.fileName);
+                    }}
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                )}
+                  
+                <img src={avatar.path} alt={avatar.fileName} className="w-12 h-12 rounded-full" />
+              </div>
+            ))}
+            {userAction === "account-edit" && (
+              <Tooltip message={"Add Custom Avatar"} position="left">
+                <button
+                  type="button"
+                  onClick={() => setModalFileUploadIsOpen(true)}
+                  className="cursor-pointer shrink-0 p-2 border-2 rounded-md transition-transform duration-300 ease-in-out text-gray-300"
                 >
-                  <img src={avatar.path} alt={avatar.fileName} className="w-12 h-12 rounded-full" />
-                </div>
-              ))}
-            </div>
+                  <PlusIcon />
+                </button>
+              </Tooltip>
+            )}
+          </div>
           </div>
         </div>
 
@@ -273,6 +403,10 @@ const UserForm: React.FC<UserFormProps> = ({ userId, userData, userAction = "use
             { !userData && !userId ? "Create" : "Update" }
           </Button>
         </div>
+
+        {modalFileUploadIsOpen && (
+          <ModalFileUpload setFileUploaded={setFileUploaded} />
+        )}
 
       </form>
     </Form>

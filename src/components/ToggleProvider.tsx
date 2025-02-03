@@ -12,7 +12,9 @@ const ToggleContext = createContext<{
     
     modalConfirmIsOpen: boolean;
     setModalConfirmIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    
+
+    modalFileUploadIsOpen: boolean;
+    setModalFileUploadIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
     
     modalIsLoading: boolean;
     setModalIsLoading: React.Dispatch<React.SetStateAction<boolean>>
@@ -25,6 +27,7 @@ export function ToggleProvider({ children }: { children: ReactNode }) {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [modalConfirmIsOpen, setModalConfirmIsOpen] = useState(false);
   const [modalIsLoading, setModalIsLoading] = useState(false);
+  const [modalFileUploadIsOpen, setModalFileUploadIsOpen] = useState(false);
 
   return (
     <ToggleContext.Provider value={{
@@ -33,7 +36,8 @@ export function ToggleProvider({ children }: { children: ReactNode }) {
       activeSubMenu, setActiveSubMenu,
       modalIsOpen, setModalIsOpen,
       modalConfirmIsOpen, setModalConfirmIsOpen,
-      modalIsLoading, setModalIsLoading
+      modalIsLoading, setModalIsLoading,
+      modalFileUploadIsOpen, setModalFileUploadIsOpen,
     }}>
       {children}
     </ToggleContext.Provider>
@@ -84,6 +88,14 @@ export function useModalIsLoading() {
   const context = useContext(ToggleContext);
   if (context === undefined) {
     throw new Error("useModalIsLoading must be used within an ToggleProvider");
+  }
+  return context;
+}
+
+export function useModalFileUploadIsOpen() {
+  const context = useContext(ToggleContext);
+  if (context === undefined) {
+    throw new Error("modalFileUploadIsOpen must be used within an ToggleProvider");
   }
   return context;
 }
